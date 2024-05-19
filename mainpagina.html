@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de VLSM</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        button {
+            margin: 5px 0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            padding-top: 60px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Calculadora de VLSM</h1>
+    <form id="vlsm-form">
+        <label for="base-ip">Dirección IP base:</label>
+        <input type="text" id="base-ip" placeholder="192.168.100.0" required>
+        <label for="base-mask">Máscara de subred:</label>
+        <select id="base-mask" required>
+            <option value="8">/8</option>
+            <option value="16">/16</option>
+            <option value="24">/24</option>
+        </select>
+        <label for="num-subnets">Número de subredes:</label>
+        <input type="number" id="num-subnets" placeholder="5" min="1" required>
+        <button type="button" id="next-step">Siguiente</button>
+    </form>
+
+    <form id="hosts-form" style="display: none;">
+        <div id="hosts-inputs"></div>
+        <button type="submit">Calcular</button>
+        <button type="button" id="back-button">Volver</button>
+    </form>
+
+    <table id="results-table" style="display: none;">
+        <thead>
+            <tr>
+                <th>Subred</th>
+                <th>Nº de Hosts</th>
+                <th>IP de red</th>
+                <th>Máscara</th>
+                <th>Primer Host</th>
+                <th>Último Host</th>
+                <th>Broadcast</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <button type="button" id="reset-button" style="display: none;">Volver al inicio</button>
+    <button type="button" id="explanation-button" style="display: none;">Explicación paso a paso</button>
+    <button onclick="window.location.href='subnetting-explanation.html'">Explicación del Proceso</button>
+
+    <div id="explanation-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Explicación paso a paso</h2>
+            <div id="explanation-steps">
+                <!-- Aquí se insertarán los pasos de la explicación -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class VLSMCalculator {
+            constructor(baseIp, baseMask, subnets) {
+                this.baseIp = this.ipToDecimal(baseIp);
+                this.baseMask = baseMask;
+                this.subnets = subnets;
+                this.results = [];
+                this.explanation = [];
+                this.calculate();
+            }
+
+            ipToDecimal(ip) {
+                return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0);
+            }
+
+            decimalToIp(dec) {
+                return `${(dec >>> 24) & 255}.${(dec >>> 16) & 255}.${(dec >>> 8) & 255}.${dec & 255}`;
+            }
+
+            calculate() {
+                let currentIp = this.baseIp;
+                this.subnets.forEach((hosts, index) => {
+                    const subnetMask = 32 - Math.ceil(Math.log2(hosts + 2));
+                    const subnetSize = 1 << (32 - subnetMask);
+
+                    const networkAddress = this.decimalToIp(currentIp);
+                    const firstHost = this.decimalToIp(currentIp + 1);
+                    const lastHost = this.decimalToIp(currentIp + subnetSize - 2);
+                    const broadcastAddress = this.decimalToIp(currentIp + subnetSize - 1);
+
+                    this.results.push({
+                        subnet: index + 1,
+                        hosts: hosts,
+                        networkAddress: networkAddress,
+                        subnetMask: subnetMask,
+                        firstHost: firstHost,
+                        lastHost: lastHost,
+                        broadcastAddress: broadcastAddress
+                    });
+
+                    this.explanation.push({
+                        step: index + 1,
+                        explanation: `
+                            <strong>Subred ${index + 1}:</strong><br>
+                            - Solicitud de hosts: ${hosts}<br>
+                            - Máscara de subred calculada: /${subnetMask}<br>
+                            - Tamaño de subred calculado: ${subnetSize} direcciones (incluyendo red y broadcast)<br>
+                            - Dirección de red: ${networkAddress}<br>
+                            - Primer host: ${firstHost}<br>
+                            - Último host: ${lastHost}<br>
+                            - Dirección de broadcast: ${broadcastAddress}<br>
+                        `
+                    });
+
+                    currentIp += subnetSize;
+                });
+            }
+        }
+
+        document.getElementById('next-step').addEventListener('click', function() {
+            const numSubnets = parseInt(document.getElementById('num-subnets').value);
+            const hostsInputsDiv = document.getElementById('hosts-inputs');
+
+            hostsInputsDiv.innerHTML = '';
+            for (let i = 0; i < numSubnets; i++) {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.placeholder = `Hosts para subred ${i + 1}`;
+                input.required = true;
+                hostsInputsDiv.appendChild(input);
+                hostsInputsDiv.appendChild(document.createElement('br'));
+            }
+
+            document.getElementById('vlsm-form').style.display = 'none';
+            document.getElementById('hosts-form').style.display = 'block';
+        });
+
+        document.getElementById('back-button').addEventListener('click', function() {
+            document.getElementById('vlsm-form').style.display = 'block';
+            document.getElementById('hosts-form').style.display = 'none';
+        });
+
+        document.getElementById('hosts-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const baseIp = document.getElementById('base-ip').value;
+            const baseMask = parseInt(document.getElementById('base-mask').value);
+            const hosts = Array.from(document.querySelectorAll('#hosts-inputs input')).map(input => parseInt(input.value));
+
+            const calculator = new VLSMCalculator(baseIp, baseMask, hosts);
+            displayResults(calculator.results);
+            displayExplanation(calculator.explanation);
+
+            document.getElementById('hosts-form').style.display = 'none';
+            document.getElementById('results-table').style.display = 'block';
+            document.getElementById('reset-button').style.display = 'block';
+            document.getElementById('explanation-button').style.display = 'block';
+        });
+
+        document.getElementById('reset-button').addEventListener('click', function() {
+            document.getElementById('vlsm-form').style.display = 'block';
+            document.getElementById('hosts-form').style.display = 'none';
+            document.getElementById('results-table').style.display = 'none';
+            document.getElementById('reset-button').style.display = 'none';
+            document.getElementById('explanation-button').style.display = 'none';
+            document.getElementById('results-table').querySelector('tbody').innerHTML = '';
+        });
+
+        document.getElementById('explanation-button').addEventListener('click', function() {
+            document.getElementById('explanation-modal').style.display = 'block';
+        });
+
+        document.querySelector('.close').addEventListener('click', function() {
+            document.getElementById('explanation-modal').style.display = 'none';
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target === document.getElementById('explanation-modal')) {
+                document.getElementById('explanation-modal').style.display = 'none';
+            }
+        });
+
+        function displayResults(results) {
+            const tbody = document.getElementById('results-table').querySelector('tbody');
+            tbody.innerHTML = '';
+            results.forEach(result => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${result.subnet}</td>
+                    <td>${result.hosts}</td>
+                    <td>${result.networkAddress}</td>
+                    <td>/${result.subnetMask}</td>
+                    <td>${result.firstHost}</td>
+                    <td>${result.lastHost}</td>
+                    <td>${result.broadcastAddress}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function displayExplanation(explanations) {
+            let explanationText = `
+                <p><strong>Dirección IP base:</strong> ${document.getElementById('base-ip').value}</p>
+                <p><strong>Máscara de subred base:</strong> /${document.getElementById('base-mask').value}</p>
+                <p><strong>Número de subredes:</strong> ${explanations.length}</p>
+                <hr>
+                <h3>Proceso de cálculo:</h3>
+            `;
+
+            explanations.forEach(exp => {
+                explanationText += `
+                    <div>
+                        ${exp.explanation}
+                    </div>
+                    <hr>
+                `;
+            });
+
+            document.getElementById('explanation-steps').innerHTML = explanationText;
+        }
+    </script>
+</body>
+</html>
