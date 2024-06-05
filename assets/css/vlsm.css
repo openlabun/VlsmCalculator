@@ -1,3 +1,8 @@
+*{
+    margin:0;
+    padding:0;
+}
+
 body {
     font-family: Arial, sans-serif;
     background: #FFFFFF; /* Fondo blanco */
@@ -8,7 +13,6 @@ body {
     justify-content: flex-start; /* Ajuste de justificación */
     min-height: 100vh; /* Cambiar height a min-height */
     margin: 0;
-    padding: 20px; /* Añadir padding para que el contenido no esté pegado a los bordes */
 }
 
 header {
