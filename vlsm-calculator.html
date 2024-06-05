@@ -163,13 +163,13 @@
         const numSubnets = parseInt(document.getElementById('num-subnets').value);
         const baseMask = parseInt(document.getElementById('base-mask').value);
         const maxHosts = maxHostsFromMask(baseMask);
-        
+    
         const hostsInputsDiv = document.getElementById('hosts-inputs');
         hostsInputsDiv.innerHTML = '';
 
         for (let i = 0; i < numSubnets; i++) {
             const label = document.createElement('label');
-            label.textContent = `Número de hosts para la subred ${i + 1} (máximo ${maxHosts}):`;
+            label.textContent = `Número de hosts para la subred ${i + 1}:`;
             hostsInputsDiv.appendChild(label);
 
             const input = document.createElement('input');
@@ -187,34 +187,39 @@
         });
 
 
+
         document.getElementById('back-button').addEventListener('click', function() {
             document.getElementById('hosts-form').style.display = 'none';
             document.getElementById('vlsm-form').style.display = 'block';
         });
 
         document.getElementById('hosts-form').addEventListener('submit', function(event) {
-    event.preventDefault();
-    const hostsInputs = Array.from(document.querySelectorAll('#hosts-form input[type="number"]'));
-    const invalidHosts = hostsInputs.some(input => input.value > input.max || input.value < input.min);
+        event.preventDefault();
+        const hostsInputs = Array.from(document.querySelectorAll('#hosts-form input[type="number"]'));
+        const invalidHosts = hostsInputs.some(input => {
+            const numHosts = parseInt(input.value);
+            return numHosts > input.max || numHosts < input.min;
+        });
 
-    if (invalidHosts) {
-        alert('Uno o más números de hosts son inválidos. Revise las cantidades y reintente.');
-        return;
-    }
+        if (invalidHosts) {
+            alert('Uno o más números de hosts son inválidos. Revise las cantidades y reintente.');
+            return;
+        }
 
-    const baseIp = document.getElementById('base-ip').value;
-    const baseMask = parseInt(document.getElementById('base-mask').value);
-    const hosts = hostsInputs.map(input => parseInt(input.value));
+        const baseIp = document.getElementById('base-ip').value;
+        const baseMask = parseInt(document.getElementById('base-mask').value);
+        const hosts = hostsInputs.map(input => parseInt(input.value));
 
-    const calculator = new VLSMCalculator(baseIp, baseMask, hosts);
-    displayResults(calculator.results);
-    displayExplanation(calculator.explanation);
+        const calculator = new VLSMCalculator(baseIp, baseMask, hosts);
+        displayResults(calculator.results);
+        displayExplanation(calculator.explanation);
 
-    document.getElementById('hosts-form').style.display = 'none';
-    document.getElementById('results-table').style.display = 'block';
-    document.getElementById('reset-button').style.display = 'block';
-    document.getElementById('explanation-button').style.display = 'block';
-});
+        document.getElementById('hosts-form').style.display = 'none';
+        document.getElementById('results-table').style.display = 'block';
+        document.getElementById('reset-button').style.display = 'block';
+        document.getElementById('explanation-button').style.display = 'block';
+        });
+
 
         document.getElementById('reset-button').addEventListener('click', function() {
             document.getElementById('vlsm-form').style.display = 'block';
