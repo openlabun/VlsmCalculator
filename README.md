@@ -11,5 +11,5 @@ Consideramos que 2 funcionalidades que se pueden implementar en un futuro podrí
 1. Creación de un foro donde los estudiantes pueden discutir temas relacionados en el estudio de redes de la computación, además los profesores tambien podran participar en estos foros y resolver dudas a los estudiantes y así crear una mejor comunidad.
 2. Además de los tutoriales de Packet Tracer, se podrían incorporar simulaciones interactivas que permitan a los estudiantes experimentar con configuraciones de red en un entorno controlado y visual, mejorando su comprensión práctica. Muchos estudiantes aprenden de manera visual por lo cual sería una buena práctica.
 
-David Salgado Cortes (monosalgado) , Emilio Jose Auque Arteta (eauque), Cristian Fabian Berrio Beltran, Esteban Quintero Gonzalez
+David Salgado Cortes (monosalgado) , Emilio Jose Auque Arteta (ejauque), Cristian Fabian Berrio Beltran (cfberrio) , Esteban Quintero Gonzalez (equintero75)
 NRC: 2381
