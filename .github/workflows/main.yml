@@ -22,5 +22,5 @@ jobs:
           git status
           docker stop vlsmcalculator-app
           docker rm vlsmcalculator-app
-          docker build -t vlsmcalculator .
-          docker run -dit -p 5018:80 --restart unless-stopped --name vlsmcalculator-app vlsmcalculator
+          docker build -t vlsmcalculator-image .
+          docker run -dit -p 5018:80 --restart unless-stopped --name vlsmcalculator vlsmcalculator-image 
