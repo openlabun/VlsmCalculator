@@ -20,7 +20,7 @@ jobs:
           cd /home/proyecto/VlsmCalculator/
           git pull origin main
           git status
-          docker stop vlsmcalculator-app
-          docker rm vlsmcalculator-app
+          docker stop vlsmcalculator
+          docker rm vlsmcalculator
           docker build -t vlsmcalculator-image .
           docker run -dit -p 5018:80 --restart unless-stopped --name vlsmcalculator vlsmcalculator-image 
